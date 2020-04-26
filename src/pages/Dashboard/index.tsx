@@ -9,6 +9,7 @@ import api from '../../services/api';
 import Header from '../../components/Header';
 
 import formatValue from '../../utils/formatValue';
+import formatDate from '../../utils/formatDate';
 
 import { Container, CardContainer, Card, TableContainer } from './styles';
 
@@ -35,9 +36,17 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     async function loadTransactions(): Promise<void> {
-      api.get('/transactions').then(response => {
-        setTransactions(response.data.transactions);
-      });
+      const { data } = await api.get<{
+        transactions: Transaction[];
+      }>('/transactions');
+
+      setTransactions(
+        data.transactions.map(transaction => ({
+          ...transaction,
+          formattedValue: formatValue(Number(transaction.value)),
+          formattedDate: formatDate(transaction.created_at.toString()),
+        })),
+      );
     }
 
     loadTransactions();
@@ -91,10 +100,10 @@ const Dashboard: React.FC = () => {
                       transaction.type === 'income' ? 'income' : 'outcome'
                     }
                   >
-                    R$ {formatValue(transaction.value)}
+                    R$ {transaction.formattedValue}
                   </td>
                   <td>{transaction.category.title}</td>
-                  <td>{transaction.created_at}</td>
+                  <td>{transaction.formattedDate}</td>
                 </tr>
               ))}
             </tbody>
